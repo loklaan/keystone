@@ -8,10 +8,11 @@ const testModules = globby.sync(`packages/**/src/**/test-fixtures.js`, {
 });
 testModules.push(path.resolve('packages/fields/tests/test-fixtures.js'));
 
-multiAdapterRunners().map(({ runner, adapterName }) =>
+multiAdapterRunners('prisma').map(({ runner, adapterName }) =>
   describe(`${adapterName} adapter`, () => {
     testModules
       .map(require)
+      .filter(({ name }) => name === 'File')
       .filter(
         ({ skipCrudTest, unSupportedAdapterList = [] }) =>
           !skipCrudTest && !unSupportedAdapterList.includes(adapterName)

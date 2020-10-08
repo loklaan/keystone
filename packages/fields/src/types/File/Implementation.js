@@ -174,6 +174,42 @@ export class PrismaFileInterface extends CommonFileInterface(PrismaFieldAdapter)
       );
     }
   }
+
+  // getQueryConditions(dbPath) {
+  //   return {
+  //     ...this.equalityConditions(dbPath),
+  //     ...this.inConditions(dbPath),
+  //   };
+  // }
+
+  equalityConditions(dbPath, f = i => i) {
+    return {
+      [this.path]: value => ({ [dbPath]: { equals: f(value) } }),
+      [`${this.path}_not`]: value =>
+        value === null
+          ? { NOT: { [dbPath]: { equals: f(value) } } }
+          : { OR: [{ NOT: { [dbPath]: { equals: f(value) } } }, { [dbPath]: { equals: null } }] },
+    };
+  }
+
+  inConditions(dbPath, f = i => i) {
+    return {
+      [`${this.path}_in`]: value =>
+        value.includes(null)
+          ? { OR: [{ [dbPath]: { in: value.filter(x => x !== null).map(f) } }, { [dbPath]: { equals: null } }] }
+          : { [dbPath]: { in: value.map(f) } },
+      [`${this.path}_not_in`]: value =>
+        value.includes(null)
+          ? {
+              AND: [
+                { NOT: { [dbPath]: { in: value.filter(x => x !== null).map(f) } } },
+                { NOT: { [dbPath]: { equals: null } } },
+              ],
+            }
+          : { OR: [{ NOT: { [dbPath]: { in: value.map(f) } } }, { [dbPath]: { equals: null } }] },
+    };
+  }
+
   getPrismaSchema() {
     return [this._schemaField({ type: 'Json' })];
   }
